@@ -1,0 +1,52 @@
+# Padrão de virtual host para um projeto PHP.
+#
+# Uso:
+#   cp projeto.conf.example meuprojeto.conf
+#   Ajuste server_name e root abaixo.
+#   docker compose restart nginx
+#
+# Caminhos são dentro do container (/var/www = pasta PROJETOS_PATH no host, ex.: ~/projetos).
+
+server {
+    listen 80;
+    listen [::]:80;
+
+    # Domínio local (adicione em /etc/hosts → 127.0.0.1)
+    server_name meuprojeto.test;
+
+    # Laravel / Symfony / similar: aponte para a pasta public
+    root /var/www/meuprojeto/public;
+
+    # PHP “na raiz” do repositório (sem pasta public): descomente a linha abaixo e comente a anterior
+    # root /var/www/meuprojeto;
+
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_pass php:9000;
+        fastcgi_index index.php;
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_read_timeout 600;
+        include fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    error_log /var/log/nginx/meuprojeto_error.log;
+    access_log /var/log/nginx/meuprojeto_access.log;
+}
