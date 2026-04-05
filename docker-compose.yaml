@@ -14,6 +14,8 @@ services:
     networks:
       - dev-network
     tty: true
+    extra_hosts:
+      - executiva.test:127.0.0.1
 
   nginx:
     build: ./nginx
